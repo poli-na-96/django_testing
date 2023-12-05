@@ -40,8 +40,8 @@ def set_up_data_for_logic_tests_delete_comments():
         author=author,
         text=COMMENT_TEXT
     )
-    edit_url = reverse('news:edit', args=(comment.id,)) 
-    delete_url = reverse('news:delete', args=(comment.id,))  
+    edit_url = reverse('news:edit', args=(comment.id,))
+    delete_url = reverse('news:delete', args=(comment.id,))
     form_data = {'text': NEW_COMMENT_TEXT}
     return (url_to_comments, author_client, reader_client,
             comment, edit_url, delete_url, form_data)
