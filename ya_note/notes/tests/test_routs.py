@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from notes.models import Note
@@ -16,6 +16,10 @@ class TestRoutes(TestCase):
     def setUpTestData(cls):
         cls.reader = User.objects.create(username='Пользователь')
         cls.author = User.objects.create(username='Автор заметки')
+        cls.reader_client = Client()
+        cls.reader_client.force_login(cls.reader)
+        cls.author_client = Client()
+        cls.author_client.force_login(cls.author)
         cls.note = Note.objects.create(
             title='Заметка',
             author=cls.author,
@@ -30,7 +34,7 @@ class TestRoutes(TestCase):
             'users:signup',
         )
         for url in urls:
-            with self.subTest():
+            with self.subTest(url=url):
                 url = reverse(url)
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -44,23 +48,21 @@ class TestRoutes(TestCase):
         for url in urls:
             with self.subTest():
                 url = reverse(url)
-                self.client.force_login(self.reader)
-                response = self.client.get(url)
+                response = self.reader_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_pages_availability(self):
         users_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.reader, HTTPStatus.NOT_FOUND),
+            (self.author_client, HTTPStatus.OK),
+            (self.reader_client, HTTPStatus.NOT_FOUND),
         )
         for user, status in users_statuses:
-            self.client.force_login(user)
             for name in ('notes:detail',
                          'notes:edit',
                          'notes:delete'):
                 with self.subTest(user=user, name=name):
                     url = reverse(name, args=(self.note.slug,))
-                    response = self.client.get(url)
+                    response = user.get(url)
                     self.assertEqual(response.status_code, status)
 
     def test_redirects(self):
